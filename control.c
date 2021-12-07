@@ -3,6 +3,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include <sys/ipc.h>
 #include <sys/sem.h>
@@ -42,8 +43,10 @@ int main() {
   else if (input[0] == 'R') {
     printf("Deleting the semaphore...\n");
     semd = semget(KEY, 1, 0); //get access
+    prev_line_size = shmget(KEY2,sizeof(int), IPC_CREAT | 0644);
     semctl(semd, IPC_RMID, 0);
-    int file = open("phone.txt",O_RDONLY);
+    shmctl(prev_line_size,IPC_RMID,0);
+    int file = open("telephone.txt",O_RDONLY);
     close(file);
   }
 
