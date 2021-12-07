@@ -23,7 +23,7 @@ int main() {
   struct seminfo  *__buf;
 };
 
-  int semd;
+  int semaphore;
   int prev_line_size;
   int v, r;
   char input[3];
@@ -32,21 +32,34 @@ int main() {
   fgets(input,3, stdin);
 
   if (input[0] == 'c') {
-    printf("Creating the semaphore...\n");
-    semd = semget(KEY, 1, IPC_CREAT | IPC_EXCL | 0644);
-    prev_line_size = shmget(KEY2,sizeof(int), IPC_CREAT | 0644);
+    prev_line_size = shmget(KEY2, sizeof(int), IPC_CREAT | 0640);
+    semaphore = semget(KEY, 1, IPC_CREAT | IPC_EXCL | 0644);
     union semun us;
     us.val = 1;
-    int file = open("telephone.txt",O_CREAT | O_TRUNC, 0644);
+    int r = semctl(semaphore, 0, SETVAL, us);
+
+    int foo = open("telephone.txt", O_TRUNC | O_CREAT, 0644);
+
+    int *first;
+    first = shmat(semaphore, 0, 0);
+    *first = 0;
+
+    shmdt(first);
   }
 
   else if (input[0] == 'R') {
     printf("Deleting the semaphore...\n");
-    semd = semget(KEY, 1, 0); //get access
+    semaphore = semget(KEY, 1, 0);
     prev_line_size = shmget(KEY2,sizeof(int), IPC_CREAT | 0644);
-    semctl(semd, IPC_RMID, 0);
+    semctl(semaphore, IPC_RMID, 0);
     shmctl(prev_line_size,IPC_RMID,0);
     int file = open("telephone.txt",O_RDONLY);
+    struct stat st;
+    stat("telephone.txt", &st);
+    char *buff = malloc(st.st_size);
+    int test = read(file, buff, st.st_size);
+    printf("%s",buff);
+    free(buff);
     close(file);
   }
 
